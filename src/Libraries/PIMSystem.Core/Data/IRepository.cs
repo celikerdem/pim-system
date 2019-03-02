@@ -6,7 +6,7 @@ namespace PIMSystem.Core.Data
 {
     public interface IRepository<TEntity> where TEntity : BaseEntity
     {
-        IQueryable<TEntity> GetAll();
+        Task<IQueryable<TEntity>> GetAll();
 
         Task<TEntity> GetByIdAsync(int id);
 

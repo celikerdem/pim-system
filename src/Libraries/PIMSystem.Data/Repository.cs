@@ -15,7 +15,7 @@ namespace PIMSystem.Data
             _dbContext = dbContext;
         }
 
-        public IQueryable<TEntity> GetAll()
+        public async Task<IQueryable<TEntity>> GetAll()
         {
             return _dbContext.Set<TEntity>().AsNoTracking();
         }

@@ -10,18 +10,18 @@ using PIMSystem.Core.Service.Data;
 
 namespace PIMSystem.Service.Data
 {
-    public class CategoryService : ICategoryService
+    public class UploadService : IUploadService
     {
-        private readonly IRepository<Category> _repository;
+        private readonly IRepository<Upload> _repository;
 
-        public CategoryService(IRepository<Category> repository)
+        public UploadService(IRepository<Upload> repository)
         {
             _repository = repository;
         }
 
-        public async Task<BaseResponse<Category>> GetCategoryAsync(int id)
+        public async Task<BaseResponse<Upload>> GetUploadAsync(int id)
         {
-            var response = new BaseResponse<Category>();
+            var response = new BaseResponse<Upload>();
 
             try
             {
@@ -37,9 +37,9 @@ namespace PIMSystem.Service.Data
             return response;
         }
 
-        public async Task<BaseResponse<List<Category>>> GetCategoriesAsync(BasePagedRequest request)
+        public async Task<BaseResponse<List<Upload>>> GetUploadsAsync(BasePagedRequest request)
         {
-            var response = new BaseResponse<List<Category>>();
+            var response = new BaseResponse<List<Upload>>();
 
             try
             {
@@ -58,7 +58,7 @@ namespace PIMSystem.Service.Data
             return response;
         }
 
-        public async Task<BaseResponse<bool>> CreateCategoryAsync(Category request)
+        public async Task<BaseResponse<bool>> CreateUploadAsync(Upload request)
         {
             var response = new BaseResponse<bool>();
 
@@ -76,7 +76,7 @@ namespace PIMSystem.Service.Data
             return response;
         }
 
-        public async Task<BaseResponse<bool>> UpdateCategoryAsync(Category request)
+        public async Task<BaseResponse<bool>> UpdateUploadAsync(Upload request)
         {
             var response = new BaseResponse<bool>();
 
@@ -94,7 +94,7 @@ namespace PIMSystem.Service.Data
             return response;
         }
 
-        public async Task<BaseResponse<bool>> DeleteCategoryAsync(int id)
+        public async Task<BaseResponse<bool>> DeleteUploadAsync(int id)
         {
             var response = new BaseResponse<bool>();
 

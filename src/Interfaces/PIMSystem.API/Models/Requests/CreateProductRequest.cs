@@ -1,6 +1,6 @@
-namespace PIMSystem.Core.Domain.Entities
+namespace PIMSystem.API.Models.Requests
 {
-    public class Product : BaseEntity
+    public class CreateProductRequest
     {
         public string ZamroId { get; set; }
         public string Name { get; set; }

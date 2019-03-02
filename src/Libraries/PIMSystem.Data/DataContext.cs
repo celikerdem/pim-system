@@ -13,5 +13,7 @@ namespace PIMSystem.Data
 
         public DbSet<Product> Product { get; set; }
         public DbSet<Category> Category { get; set; }
+        public DbSet<Upload> Upload { get; set; }
+        public DbSet<UploadItem> UploadItem { get; set; }
     }
 }
