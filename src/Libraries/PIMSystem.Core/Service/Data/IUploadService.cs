@@ -9,7 +9,7 @@ namespace PIMSystem.Core.Service.Data
     public interface IUploadService
     {
         Task<BaseResponse<Upload>> GetUploadAsync(int id);
-        Task<BaseResponse<List<Upload>>> GetUploadsAsync(BasePagedRequest request);
+        Task<BasePagedResponse<List<Upload>>> GetUploadsAsync(BasePagedRequest request);
         Task<BaseResponse<bool>> CreateUploadAsync(Upload request);
         Task<BaseResponse<bool>> UpdateUploadAsync(Upload request);
         Task<BaseResponse<bool>> DeleteUploadAsync(int id);

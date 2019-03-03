@@ -37,22 +37,26 @@ namespace PIMSystem.Service.Data
             return response;
         }
 
-        public async Task<BaseResponse<List<UploadItem>>> GetUploadItemsAsync(BasePagedRequest request)
+        public async Task<BasePagedResponse<List<UploadItem>>> GetUploadItemsAsync(UploadItemPagedRequest request)
         {
-            var response = new BaseResponse<List<UploadItem>>();
+            var response = new BasePagedResponse<List<UploadItem>>();
 
             try
             {
                 var query = await _repository.GetAll();
+                if (request.UploadId > 0)
+                    query = query.Where(x => x.UploadId == request.UploadId);
                 var entityList = query.Skip(request.Offset)
                                       .Take(request.Limit)
                                       .ToList();
-                response.Data = entityList;
+                response.Total = query.Count();
+                response.Index = request.Offset / request.Limit;
+                response.PageSize = request.Limit;
+                response.Items = entityList;
             }
             catch (Exception ex)
             {
-                response.Errors.Add(ex.ToString());
-                response.Data = null;
+                response.Items = null;
             }
 
             return response;

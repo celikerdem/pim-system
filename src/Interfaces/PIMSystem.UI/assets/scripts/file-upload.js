@@ -4,16 +4,47 @@ $('.custom-file-input').on('change', function () {
 })
 
 $('#btnUploadFile').on('click', function () {
-    postFileUpload();
+    fileUploadProgressStarted();
+    setFileUploadInitializing();
+    setTimeout(function () {
+        if (!postFileUpload()) {
+            resetFileUploadProgress();
+            fileUploadProgressFinished();
+        };
+    }, 1000);
 })
 
 function fileUploadProgressStarted() {
     resetFileUploadProgress();
     $('#btnUploadFile').addClass('disabled');
+    $('#btnGrpUploadFile').hide();
+}
+
+function monitorFileUploadProgress(uploadId) {
+    var progress = getUploadProgress(uploadId);
+    var intervalPeriod = 10000;
+    if (progress.totalCount <= 100) {
+        intervalPeriod = 100;
+    }
+    else if (progress.totalCount <= 1000) {
+        intervalPeriod = 500;
+    }
+    else if (progress.totalCount <= 5000) {
+        intervalPeriod = 2000;
+    }
+    var interval = setInterval(function () {
+        if (progress.totalCount == progress.successCount + progress.failCount) {
+            clearInterval(interval);
+            fileUploadProgressFinished();
+        } else {
+            progress = getUploadProgress(uploadId);
+        }
+    }, intervalPeriod);
 }
 
 function fileUploadProgressFinished() {
     $('#btnUploadFile').removeClass('disabled');
+    $('#btnGrpUploadFile').show();
 }
 
 function stripProgressBarStyle() {

@@ -1,3 +1,49 @@
+$(document).ready(function () {
+    $('#tblCategories').dataTable({
+        "sPaginationType": "full_numbers",
+        processing: true,
+        serverSide: true,
+        ajax: {
+            type: "POST",
+            contentType: "application/json",
+            url: PIM_API_BASE_URL + PIM_CATEGORIES_ENDPOINT + '/filter',
+            data: function (d) {
+                return JSON.stringify(d);
+            }
+        },
+        columns: [
+            { "data": "id" },
+            { "data": "categoryId" },
+            { "data": "name" }
+        ]
+    });
+
+    $('#tblProducts').dataTable({
+        "sPaginationType": "full_numbers",
+        processing: true,
+        serverSide: true,
+        ajax: {
+            type: "POST",
+            contentType: "application/json",
+            url: PIM_API_BASE_URL + PIM_PRODUCTS_ENDPOINT + '/filter',
+            data: function (d) {
+                return JSON.stringify(d);
+            }
+        },
+        columns: [
+            { "data": "id" },
+            { "data": "zamroId" },
+            { "data": "name" },
+            { "data": "description" },
+            { "data": "minOrderQuantity" },
+            { "data": "unitOfMeasure" },
+            { "data": "categoryId" },
+            { "data": "purchasePrice" },
+            { "data": "available" }
+        ]
+    });
+});
+
 $('.toast').toast({
     animation: true,
     autohide: false,
@@ -27,4 +73,12 @@ function popToast(title, message, type) {
         successToastHtml = successToastHtml.replace('**type**', '');
 
     $('#toastsArea').append(successToastHtml);
+}
+
+function navigateTo(contentName) {
+    $('#contentCsvUpload').hide();
+    $('#contentCategories').hide();
+    $('#contentProducts').hide();
+
+    $('#' + contentName).show();
 }

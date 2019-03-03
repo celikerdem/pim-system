@@ -37,9 +37,9 @@ namespace PIMSystem.Service.Data
             return response;
         }
 
-        public async Task<BaseResponse<List<Product>>> GetProductsAsync(BasePagedRequest request)
+        public async Task<BasePagedResponse<List<Product>>> GetProductsAsync(BasePagedRequest request)
         {
-            var response = new BaseResponse<List<Product>>();
+            var response = new BasePagedResponse<List<Product>>();
 
             try
             {
@@ -47,12 +47,14 @@ namespace PIMSystem.Service.Data
                 var entityList = query.Skip(request.Offset)
                                       .Take(request.Limit)
                                       .ToList();
-                response.Data = entityList;
+                response.Total = query.Count();
+                response.Index = request.Offset / request.Limit;
+                response.PageSize = request.Limit;
+                response.Items = entityList;
             }
             catch (Exception ex)
             {
-                response.Errors.Add(ex.ToString());
-                response.Data = null;
+                response.Items = null;
             }
 
             return response;

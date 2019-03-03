@@ -1,8 +1,7 @@
-namespace PIMSystem.Core.Domain.Events
+namespace PIMSystem.API.Models.UploadModels
 {
-    public class ProductImportedEvent
+    public class ProductUploadModel
     {
-        public int UploadId { get; set; }
         public string ZamroID { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }

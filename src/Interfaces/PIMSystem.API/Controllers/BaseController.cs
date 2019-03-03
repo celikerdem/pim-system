@@ -9,7 +9,7 @@ namespace PIMSystem.API.Controllers
     {
         private const string OffsetPattern = @"Offset=";
 
-        public void PreparePagination<T>(long offset, long limit, long total, string resource, BasePagedResponse<List<T>> response)
+        public void PreparePagination<T>(long offset, long limit, int total, string resource, BasePagedResponse<List<T>> response)
         {
             response.Index = offset;
             response.Total = total;

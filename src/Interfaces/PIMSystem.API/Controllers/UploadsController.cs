@@ -15,6 +15,8 @@ using PIMSystem.Core.Helper;
 using PIMSystem.Core.Domain.Responses;
 using PIMSystem.Core.Domain.Events;
 using PIMSystem.Core.Service.Event;
+using PIMSystem.Core.Domain.Requests;
+using PIMSystem.API.Models.UploadModels;
 
 namespace PIMSystem.API.Controllers
 {
@@ -22,81 +24,151 @@ namespace PIMSystem.API.Controllers
     [ApiController]
     public class UploadsController : BaseController
     {
+        private const string CategoryTableName = "Category";
+        private const string ProductTableName = "Product";
         private readonly IUploadService _uploadService;
+        private readonly IUploadItemService _uploadItemService;
         private readonly IMqService _mqService;
 
-        public UploadsController(IUploadService uploadService, IMqService mqService)
+        public UploadsController(IUploadService uploadService, IUploadItemService uploadItemService, IMqService mqService)
         {
             _uploadService = uploadService;
+            _uploadItemService = uploadItemService;
             _mqService = mqService;
         }
 
         [HttpPost("csv")]
         public async Task<IActionResult> PostCsvFile(IFormFile file)
         {
-            //Validate file name
-            var tableName = string.Empty;
-            if (file.FileName.Contains('.'))
-                switch (file.FileName.Split('.')[0])
+            try
+            {
+                //Validate file name
+                var tableName = string.Empty;
+                if (file.FileName.Contains('.'))
+                    switch (file.FileName.Split('.')[0])
+                    {
+                        case "CategoryData":
+                            tableName = CategoryTableName;
+                            break;
+                        case "ProductData":
+                            tableName = ProductTableName;
+                            break;
+                    }
+                if (string.IsNullOrEmpty(tableName))
+                    return BadRequest("File name is not accepted! Possible file names: CategoryData.csv, ProductData.csv");
+
+                //Create Upload entity
+                var entity = new Upload
                 {
-                    case "CategoryData":
-                        tableName = "Category";
+                    FileName = file.FileName,
+                    TableName = tableName
+                };
+                var serviceResponse = await _uploadService.CreateUploadAsync(entity);
+                if (serviceResponse.HasError)
+                    return BadRequest(serviceResponse.Errors);
+
+                int itemCount = 0;
+                List<string> failedRows = null;
+                List<object> eventMessages = new List<object>();
+
+                //Read csv data
+                switch (tableName)
+                {
+                    case CategoryTableName:
+                        var csvCategoryResponse = CsvFileHelper.ReadFromStream<CategoryUploadModel>(file.OpenReadStream());
+                        failedRows = csvCategoryResponse.FailedRows;
+                        itemCount = csvCategoryResponse.Data.Count();
+                        csvCategoryResponse.Data.ForEach(x =>
+                        {
+                            var eventMessage = new CategoryImportedEvent
+                            {
+                                UploadId = entity.Id,
+                                CategoryID = x.CategoryID,
+                                Name = x.Name
+                            };
+                            eventMessages.Add(eventMessage);
+                        });
                         break;
-                    case "ProductData":
-                        tableName = "Product";
+                    case ProductTableName:
+                        var csvProductResponse = CsvFileHelper.ReadFromStream<ProductUploadModel>(file.OpenReadStream());
+                        failedRows = csvProductResponse.FailedRows;
+                        itemCount = csvProductResponse.Data.Count();
+                        csvProductResponse.Data.ForEach(x =>
+                        {
+                            var eventMessage = new ProductImportedEvent
+                            {
+                                UploadId = entity.Id,
+                                ZamroID = x.ZamroID,
+                                Name = x.Name,
+                                Description = x.Description,
+                                MinOrderQuantity = x.MinOrderQuantity,
+                                UnitOfMeasure = x.UnitOfMeasure,
+                                CategoryID = x.CategoryID,
+                                PurchasePrice = x.PurchasePrice,
+                                Available = x.Available
+                            };
+                            eventMessages.Add(eventMessage);
+                        });
                         break;
                 }
-            if (string.IsNullOrEmpty(tableName))
-                return BadRequest("File name is not accepted! Possible file names: CategoryData.csv, ProductData.csv");
 
-            int itemCount = 0;
-            List<string> failedRows = null;
-            List<object> eventMessages = null;
+                //Update Upload entity with ItemCount
+                entity.ItemCount = itemCount + failedRows.Count(); //Total uploaded data count
+                var updateResponse = await _uploadService.UpdateUploadAsync(entity);
+                if (updateResponse.HasError)
+                    return BadRequest(updateResponse.Errors);
 
-            //Read csv data
-            switch (tableName)
-            {
-                case "Category":
-                    var csvCategoryResponse = CsvFileHelper.ReadFromStream<CategoryImportedEvent>(file.OpenReadStream());
-                    failedRows = csvCategoryResponse.FailedRows;
-                    itemCount = csvCategoryResponse.Data.Count();
-                    eventMessages = csvCategoryResponse.Data.Select(x => x as object).ToList();
-                    break;
-                case "Product":
-                    var csvProductResponse = CsvFileHelper.ReadFromStream<ProductImportedEvent>(file.OpenReadStream());
-                    failedRows = csvProductResponse.FailedRows;
-                    itemCount = csvProductResponse.Data.Count();
-                    eventMessages = csvProductResponse.Data.Select(x => x as object).ToList();
-                    break;
+                //Create UploadItem for each failed row
+                if (failedRows.Count() > 0)
+                {
+                    foreach (var failedRow in failedRows)
+                    {
+                        await _uploadItemService.CreateUploadItemAsync(new UploadItem
+                        {
+                            UploadId = entity.Id,
+                            ItemId = -1,
+                            Success = false
+                        });
+                    }
+                }
+
+                //Publish imported events
+                Parallel.ForEach(eventMessages, async eventMessage =>
+                {
+                    await _mqService.PublishEvent(eventMessage);
+                });
+
+                return Accepted(new { id = entity.Id });
             }
-            // if (failedRows.Count() > 0)
-            //     return BadRequest(failedRows);
-
-            //Create Upload entity
-            var entity = new Upload
+            catch (Exception ex)
             {
-                FileName = file.FileName,
-                TableName = tableName,
-                ItemCount = itemCount
-            };
-            var serviceResponse = await _uploadService.CreateUploadAsync(entity);
-            if (serviceResponse.HasError)
-                return BadRequest(serviceResponse.Errors);
-
-            //Publish imported events
-            Parallel.ForEach(eventMessages, async eventMessage =>
-            {
-                await _mqService.PublishEvent(eventMessage);
-            });
-
-            return Accepted(new { id = entity.Id });
+                return BadRequest(ex.ToString());
+            }
         }
 
         [HttpGet("{id}/progress")]
         public async Task<IActionResult> GetUploadProgress(int id)
         {
-            var entity = await _uploadService.GetUploadAsync(id);
-            return Ok();
+            var upload = await _uploadService.GetUploadAsync(id);
+            if (upload.Data == null)
+                return NotFound();
+
+            var totalCount = upload.Data.ItemCount;
+
+            var uploadItems = await _uploadItemService.GetUploadItemsAsync(new UploadItemPagedRequest
+            {
+                UploadId = upload.Data.Id,
+                Offset = 0,
+                Limit = int.MaxValue
+            });
+
+            return Ok(new
+            {
+                id = id,
+                totalCount = totalCount,
+                successCount = uploadItems.Items.Count(x => x.Success),
+                failCount = uploadItems.Items.Count(x => !x.Success)
+            });
         }
     }
 }

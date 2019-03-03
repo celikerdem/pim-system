@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
 using PIMSystem.Core.Domain.Responses;
@@ -33,7 +34,7 @@ namespace PIMSystem.Core.Helper
                 response.FailedRows.Add(context.RawRecord);
             };
 
-            TextReader reader = new StreamReader(stream);
+            TextReader reader = new StreamReader(stream, Encoding.GetEncoding("ISO-8859-1"));
             var csvReader = new CsvReader(reader, config);
             response.Data = csvReader.GetRecords<T>().ToList();
 

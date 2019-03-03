@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using PIMSystem.Core.Service.Data;
 using PIMSystem.Core.Domain.Entities;
 using PIMSystem.API.Models.Requests;
+using PIMSystem.Core.Domain.Requests;
+using PIMSystem.API.Models.Responses;
 
 namespace PIMSystem.API.Controllers
 {
@@ -13,11 +15,11 @@ namespace PIMSystem.API.Controllers
     [ApiController]
     public class ProductsController : BaseController
     {
-        private readonly IProductService _ProductService;
+        private readonly IProductService _productService;
 
-        public ProductsController(IProductService ProductService)
+        public ProductsController(IProductService productService)
         {
-            _ProductService = ProductService;
+            _productService = productService;
         }
 
         [HttpPost]
@@ -35,12 +37,33 @@ namespace PIMSystem.API.Controllers
                 Available = request.Available
             };
 
-            var serviceResponse = await _ProductService.CreateProductAsync(entity);
+            var serviceResponse = await _productService.CreateProductAsync(entity);
 
             if (!serviceResponse.HasError)
-                return Ok(new { id = entity.Id });
+                return Created(string.Empty, new { id = entity.Id });
             else
-                return BadRequest(serviceResponse.Errors);
+                return BadRequest(new { id = entity.Id, errors = serviceResponse.Errors });
+        }
+
+        [HttpPost("filter")]
+        public async Task<IActionResult> FilterProducts([FromBody]FilterDatatableRequest request)
+        {
+            var response = new FilterDatatableResponse<List<Product>>();
+            var pagedRequest = new BasePagedRequest
+            {
+                Offset = request.Start,
+                Limit = request.Length
+            };
+            var serviceResponse = await _productService.GetProductsAsync(pagedRequest);
+            response.Data = serviceResponse.Items;
+            response.RecordsTotal = serviceResponse.Total;
+            response.RecordsFiltered = serviceResponse.Total;
+            response.Draw = request.Draw;
+
+            if (serviceResponse.Items != null)
+                return Ok(response);
+            else
+                return NotFound(serviceResponse);
         }
     }
 }

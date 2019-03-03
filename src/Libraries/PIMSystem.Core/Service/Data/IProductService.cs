@@ -9,7 +9,7 @@ namespace PIMSystem.Core.Service.Data
     public interface IProductService
     {
         Task<BaseResponse<Product>> GetProductAsync(int id);
-        Task<BaseResponse<List<Product>>> GetProductsAsync(BasePagedRequest request);
+        Task<BasePagedResponse<List<Product>>> GetProductsAsync(BasePagedRequest request);
         Task<BaseResponse<bool>> CreateProductAsync(Product request);
         Task<BaseResponse<bool>> UpdateProductAsync(Product request);
         Task<BaseResponse<bool>> DeleteProductAsync(int id);

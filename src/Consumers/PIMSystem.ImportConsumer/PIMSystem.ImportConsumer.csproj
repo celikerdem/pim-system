@@ -18,5 +18,14 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Libraries\PIMSystem.Core\PIMSystem.Core.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="run.cmd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>
