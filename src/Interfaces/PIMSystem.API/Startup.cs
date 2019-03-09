@@ -51,15 +51,15 @@ namespace PIMSystem.API
                 c.DescribeStringEnumsInCamelCase();
             });
 
-            services.AddTransient<ICategoryService, CategoryService>();
-            services.AddTransient<IProductService, ProductService>();
-            services.AddTransient<IUploadService, UploadService>();
-            services.AddTransient<IUploadItemService, UploadItemService>();
-            services.AddTransient<IMqService, RabbitMqService>();
-            services.AddTransient<IRepository<Category>, Repository<Category>>();
-            services.AddTransient<IRepository<Product>, Repository<Product>>();
-            services.AddTransient<IRepository<Upload>, Repository<Upload>>();
-            services.AddTransient<IRepository<UploadItem>, Repository<UploadItem>>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IUploadService, UploadService>();
+            services.AddScoped<IUploadItemService, UploadItemService>();
+            services.AddScoped<IMqService, RabbitMqService>();
+            services.AddScoped<IRepository<Category>, Repository<Category>>();
+            services.AddScoped<IRepository<Product>, Repository<Product>>();
+            services.AddScoped<IRepository<Upload>, Repository<Upload>>();
+            services.AddScoped<IRepository<UploadItem>, Repository<UploadItem>>();
             services.AddDbContext<DataContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("DbConnection"));
